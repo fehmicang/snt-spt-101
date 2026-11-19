@@ -1142,6 +1142,7 @@ function applyTheme(){ document.documentElement.dataset.theme=effTheme(); docume
 Object.assign(UI.tr,{modeL:'Mod',mEndless:'Sonsuz',mScore:'Skor',roundDone:'Tur bitti',rightOf:'doğru',timeL:'Süre',byType:'Soru türlerine göre',wrongList:'Yanlış yaptıkların',noWrong:'Hiç yanlış yok, harika!',newRound:'Yeni tur',lastRounds:'Son turlar',everyN:'son 25 soruda',min:'dk',sec:'sn',qtypes:{mcq:'Çoktan seçmeli',tf:'Doğru / yanlış',clues:'Ben kimim?',identify:'Bu eser hangisi?',order:'Sıralama',match:'Eşleştirme'}});
 Object.assign(UI.fr,{modeL:'Mode',mEndless:'Infini',mScore:'Score',roundDone:'Tour terminé',rightOf:'bonnes réponses',timeL:'Durée',byType:'Par type de question',wrongList:'Tes erreurs',noWrong:'Aucune erreur, bravo !',newRound:'Nouveau tour',lastRounds:'Derniers tours',everyN:'sur les 25 dernières questions',min:'min',sec:'s',qtypes:{mcq:'QCM',tf:'Vrai / faux',clues:'Qui suis-je ?',identify:'Quelle œuvre ?',order:'Classement',match:'Association'}});
 Object.assign(UI.en,{modeL:'Mode',mEndless:'Endless',mScore:'Score',roundDone:'Round complete',rightOf:'correct',timeL:'Time',byType:'By question type',wrongList:'Your mistakes',noWrong:'No mistakes, great!',newRound:'New round',lastRounds:'Recent rounds',everyN:'in the last 25 questions',min:'min',sec:'s',qtypes:{mcq:'Multiple choice',tf:'True / false',clues:'Who am I?',identify:'Which work?',order:'Ordering',match:'Matching'}});
+Object.assign(UI.tr,{movL:'Akım',perL:'Dönem'});Object.assign(UI.fr,{movL:'Mouvement',perL:'Période'});Object.assign(UI.en,{movL:'Movement',perL:'Period'});
 Object.assign(UI.tr,{vis:'Görsel eşleme',viss:'Sadece görsellerden: kimin eseri, hangi eser, hangi akım',movQ:'Bu eser hangi akıma ait?'});
 Object.assign(UI.fr,{vis:'Reconnaissance visuelle',viss:'Uniquement par l\'image : de qui, quelle œuvre, quel mouvement',movQ:'Quel mouvement ?'});
 Object.assign(UI.en,{vis:'Visual match',viss:'Image-only: who made it, which work, which movement',movQ:'Which movement?'});
@@ -1154,7 +1155,7 @@ function bandFor(region){ const b=BANDS[effTheme()][region]||BANDS[effTheme()].w
 function setBand(region){ const [bg,fg]=bandFor(region); const r=document.documentElement; r.style.setProperty('--band',bg); r.style.setProperty('--bandfg',fg); }
 const GEAR='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>';
 
-const APP_VER='v7';
+const APP_VER='v8';
 function renderBand(extra){
   return `<div class="band"><div class="in"><div class="topbar"><button class="logo" data-act="home">SNT-SPT <span class="mono" style="font-weight:700">101</span><span class="ver">${APP_VER}<span class="vq"> · ${(typeof BANK_EXPORT!=='undefined'&&BANK_EXPORT&&BANK_EXPORT.questions)?BANK_EXPORT.questions.length:bankCount()} ${T('questions')}</span></span></button>
     <nav class="navlinks"><button data-act="home" aria-current="${V.view==='home'}">${T('home')}</button><button data-act="endless" aria-current="${V.view==='quiz'&&S.topic==='mix'}">${T('endless')}</button><button data-act="notebook" aria-current="${V.view==='notebook'}">${T('notebook')}</button></nav>
@@ -1367,7 +1368,7 @@ function renderQuiz(){
     const ok=a.ok; let extra=''; if(type==='clues'&&ok) extra=` · ${T('cluesUsed')(s.clues[q.id]||1)}`;
     body+=`<section class="verdict"><div class="vtag"><span class="pill ${ok?'ok':'bad'}">${ok?'✓ '+T('correct'):'✕ '+T('wrong')}${extra}</span>${S.streak>2&&ok?`<span class="pill lv">${T('streak')} ${S.streak}</span>`:''}</div>`;
     if(!ok&&(type==='mcq'||type==='identify'||type==='clues')) body+=`<p class="exp"><strong>${T('rightIs')}:</strong> ${R(d.opts[q.answer])}</p>`;
-    body+=`<p class="exp">${R(d.exp)}</p>`;
+    body+=`<p class="exp">${R(d.exp)}</p>`+movLine(q);
     if(S.showTr&&showLang!=='tr') body+=`<div class="trline">${esc(q.tr.exp)}</div>`;
     body+=linksBlock(q,d);
     if(q.cartel) body+=`<div class="cartel">${['who','what','when','how','where'].filter(k=>q.cartel[k]).map(k=>`<div><span class="k">${T(k)}</span><span class="v">${R(L(q.cartel[k])||q.cartel[k].tr)}</span></div>`).join('')}</div>`;
@@ -1584,6 +1585,9 @@ async function loadAuto(q){
   if(V.view==='artist'&&q.id.startsWith('artist_')){ renderArtist(); return; }
   const cq=V.view==='quiz'?currentQ():null; if(cq&&cq.id===q.id){ if(!im&&skipNoImg(q)) return; renderQuiz(); }
 }
+function movLine(q){ if(q.type!=='identify'||q.mov) return ''; const tg=q.tags||[];
+  const mv=tg.find(t=>TOPIC_BY_KEY[t]&&TOPIC_BY_KEY[t].group==='movement'); const k=mv||tg.find(t=>TOPIC_BY_KEY[t]&&TOPIC_BY_KEY[t].group==='period'); if(!k) return '';
+  return `<p class="exp"><strong>${T(mv?'movL':'perL')}:</strong> ${esc(L(TOPIC_BY_KEY[k])||TOPIC_BY_KEY[k].tr)}</p>`; }
 let REPORTS=recall('reports',[]);
 function reportBlock(q){ const r=V.rep&&V.rep.id===q.id?V.rep:null;
   if(!r) return `<div class="reprow"><button class="mini" data-act="repopen">${T('rep')}</button></div>`;
