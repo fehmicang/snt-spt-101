@@ -1154,7 +1154,7 @@ function bandFor(region){ const b=BANDS[effTheme()][region]||BANDS[effTheme()].w
 function setBand(region){ const [bg,fg]=bandFor(region); const r=document.documentElement; r.style.setProperty('--band',bg); r.style.setProperty('--bandfg',fg); }
 const GEAR='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>';
 
-const APP_VER='v6';
+const APP_VER='v7';
 function renderBand(extra){
   return `<div class="band"><div class="in"><div class="topbar"><button class="logo" data-act="home">SNT-SPT <span class="mono" style="font-weight:700">101</span><span class="ver">${APP_VER}<span class="vq"> · ${(typeof BANK_EXPORT!=='undefined'&&BANK_EXPORT&&BANK_EXPORT.questions)?BANK_EXPORT.questions.length:bankCount()} ${T('questions')}</span></span></button>
     <nav class="navlinks"><button data-act="home" aria-current="${V.view==='home'}">${T('home')}</button><button data-act="endless" aria-current="${V.view==='quiz'&&S.topic==='mix'}">${T('endless')}</button><button data-act="notebook" aria-current="${V.view==='notebook'}">${T('notebook')}</button></nav>
@@ -1513,7 +1513,7 @@ ${JSON.stringify({years:r.years,text:r.tr,works:(r.works||[]).map(w=>({t:w.t&&w.
 }
 
 /* ================= images ================= */
-const AUTO=recall('imgcache4',{});
+const AUTO=recall('imgcache5',{});
 function imageBlock(q,done){
   const ident=q.type==='identify';
   let src=null, cap='', link='';
@@ -1549,7 +1549,7 @@ async function wikiTitle(title){ if(!title) return null;
   const j=await getJSON('https://en.wikipedia.org/w/api.php?'+new URLSearchParams({action:'query',format:'json',origin:'*',titles:title,redirects:'1',prop:'pageimages|description',piprop:'thumbnail|name',pithumbsize:'1200',pilicense:'any'}));
   const p=Object.values((j.query&&j.query.pages)||{})[0]; if(!p||p.missing!==undefined||!p.thumbnail||/\.svg/i.test(p.pageimage||'')||isHuman(p.description)) return null;
   return {src:p.thumbnail.source,link:'https://en.wikipedia.org/wiki/'+encodeURIComponent(p.title.replace(/ /g,'_')),artist:p.title,lic:'Wikipedia'}; }
-function titleFits(term,title){ const w=x=>String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\(.*?\)/g,'').split(/[^a-z0-9]+/).filter(z=>z.length>2&&!['the','and','with','des','les','del','von','van','der'].includes(z)); const a=w(term), b=new Set(w(title)); if(!a.length) return true; return a.filter(z=>b.has(z)).length>=Math.ceil(a.length/2); }
+function titleFits(term,title){ const w=x=>String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[()]/g,' ').split(/[^a-z0-9]+/).filter(z=>z.length>2&&!['the','and','with','des','les','del','von','van','der'].includes(z)); const a=w(term), b=new Set(w(title)); if(!a.length) return true; const h=a.filter(z=>b.has(z)).length; return h>=Math.max(Math.ceil(a.length/2),Math.min(2,a.length)); }
 async function wikiPick(term){
   const j=await getJSON('https://en.wikipedia.org/w/api.php?'+new URLSearchParams({action:'query',format:'json',origin:'*',generator:'search',gsrsearch:term,gsrlimit:'5',gsrnamespace:'0',prop:'pageimages|description',piprop:'thumbnail|name',pithumbsize:'1200',pilicense:'any'}));
   const pages=Object.values((j.query&&j.query.pages)||{}).sort((a,b)=>a.index-b.index);
@@ -1564,7 +1564,7 @@ async function commonsPick(term,q){
   const j=await getJSON('https://commons.wikimedia.org/w/api.php?'+new URLSearchParams({action:'query',format:'json',origin:'*',generator:'search',gsrsearch:'filetype:bitmap '+term,gsrnamespace:'6',gsrlimit:'5',prop:'imageinfo',iiprop:'url|extmetadata',iiurlwidth:'1200',iiextmetadatafilter:'Artist|LicenseShortName'}));
   const pages=Object.values((j.query&&j.query.pages)||{}).sort((a,b)=>a.index-b.index);
   const bad=q.medium==='sculpture'?/grave|tomb|stamp|coin|banknote|selfie/i:/statue|bust|grave|tomb|stamp|coin|banknote|selfie|monument to|portrait of the artist/i;
-  const pg=pages.find(p=>!bad.test(p.title||''));
+  const pg=pages.find(p=>!bad.test(p.title||'')&&titleFits(term,String(p.title||'').replace(/^File:/,'').replace(/\.\w+$/,'')));
   const ii=pg&&pg.imageinfo&&pg.imageinfo[0];
   if(!ii||!(ii.thumburl||ii.url)) return null;
   const em=ii.extmetadata||{}; return {src:ii.thumburl||ii.url,link:ii.descriptionurl||'',artist:stripTags(em.Artist&&em.Artist.value),lic:((em.LicenseShortName&&em.LicenseShortName.value)||'')+' · Wikimedia Commons'};
@@ -1574,11 +1574,12 @@ async function loadAuto(q){
   let im=null; const terms=imgTerms(q);
   if(q.img&&q.img.src) im={src:q.img.src,artist:q.img.credit||'',lic:[q.img.lic,q.img.from].filter(Boolean).join(' · '),link:q.img.link||''};
   try{
-    if(!im){ const wk=((q.search||{}).wiki||{}).en; if(wk) im=await wikiTitle(wk).catch(()=>null); }
-    if(!im) for(const t of terms.slice(0,3)){ const c=await wikiPick(t).catch(()=>null); if(c&&(q.type!=='identify'||titleFits(t,c.artist))){ im=c; break; } }
-    if(!im){ const sr=q.search||{}; const t=sr.commons||q.look; if(t) im=await commonsPick(t,q).catch(()=>null); }
+    const wk=((q.search||{}).wiki||{}).en; const lock=q.type==='identify'&&!!wk;
+    if(!im&&wk) im=await wikiTitle(wk).catch(()=>null);
+    if(!im&&!lock) for(const t of terms.slice(0,3)){ const c=await wikiPick(t).catch(()=>null); if(c&&titleFits(t,c.artist)){ im=c; break; } }
+    if(!im&&!lock){ const sr=q.search||{}; const t=sr.commons||q.look; if(t) im=await commonsPick(t,q).catch(()=>null); }
   }catch(e){}
-  AUTO[q.id]=im||false; store('imgcache4',AUTO); delete autoBusy[q.id];
+  AUTO[q.id]=im||false; store('imgcache5',AUTO); delete autoBusy[q.id];
   if(V.view==='intro'&&q.id.startsWith('intro-')){ renderIntro(); return; }
   if(V.view==='artist'&&q.id.startsWith('artist_')){ renderArtist(); return; }
   const cq=V.view==='quiz'?currentQ():null; if(cq&&cq.id===q.id){ if(!im&&skipNoImg(q)) return; renderQuiz(); }
@@ -1606,11 +1607,11 @@ function matchImgs(q){ return (q&&q.type==='match'&&q.mimg&&Array.isArray(q.mimg
 const mBusy={};
 async function loadMatchImgs(q){ const mi=matchImgs(q); if(!mi||mBusy[q.id]) return; mBusy[q.id]=1; let changed=false;
   await Promise.all(mi.terms.map(async(t,i)=>{ const k=q.id+'#'+i; if(AUTO[k]!==undefined||!t) return; let im=null; try{ if(!mi.auto) im=await wikiTitle(t).catch(()=>null); if(!im){ const c=await wikiPick(t).catch(()=>null); if(c&&(!mi.auto||titleFits(t.split(' ').slice(0,4).join(' '),c.artist)||mi.post)) im=c; } if(!im&&!mi.auto) im=await commonsPick(t,q).catch(()=>null); }catch(e){} AUTO[k]=im||false; changed=true; }));
-  delete mBusy[q.id]; if(changed){ store('imgcache4',AUTO); const cq=V.view==='quiz'?currentQ():null; if(cq&&cq.id===q.id) renderQuiz(); } }
+  delete mBusy[q.id]; if(changed){ store('imgcache5',AUTO); const cq=V.view==='quiz'?currentQ():null; if(cq&&cq.id===q.id) renderQuiz(); } }
 function mThumb(q,i,done){ const im=AUTO[q.id+'#'+i]; if(im===false&&done){ if(matchImgs(q).auto) return ''; const t=matchImgs(q).terms[i]; return t?`<a class="mwiki" href="${imgSearch(t)}" target="_blank" rel="noopener">Google ↗</a>`:''; } if(im) return `<img class="mthumb" data-gq="${esc(q.id)}" data-gi="${i}" src="${esc(im.src)}" alt="" referrerpolicy="no-referrer" onerror="this.style.display='none'">`; if(im===undefined&&WEB) return `<span class="mthumb ph"></span>`; return ''; }
 function skipNoImg(q){ const s=S.session; if(!s||q.type!=='identify'||IMGMAP[q.id]||s.ans[q.id]!==undefined) return false;
   const i=s.list.indexOf(q.id); if(i<0) return false; s.list.splice(i,1); s.pos=i-1; advance(false); return true; }
-function imgFail(id){ if(IMGMAP[id]) return; AUTO[id]=false; store('imgcache4',AUTO); const q=BANK.get(id); if(q&&V.view==='quiz'){ const cq=currentQ(); if(cq&&cq.id===id&&!skipNoImg(q)) renderQuiz(); } }
+function imgFail(id){ if(IMGMAP[id]) return; AUTO[id]=false; store('imgcache5',AUTO); const q=BANK.get(id); if(q&&V.view==='quiz'){ const cq=currentQ(); if(cq&&cq.id===id&&!skipNoImg(q)) renderQuiz(); } }
 async function shrink(file){ try{ const bmp=await createImageBitmap(file); const sc=Math.min(1,1600/Math.max(bmp.width,bmp.height)); const c=document.createElement('canvas'); c.width=Math.round(bmp.width*sc); c.height=Math.round(bmp.height*sc); c.getContext('2d').drawImage(bmp,0,0,c.width,c.height); return await new Promise(r=>c.toBlob(b=>r(b||file),'image/jpeg',0.86)); }catch(e){ return file; } }
 async function uploadImage(q,file){
   if(!ASSETS||!file) return; toast('…');
